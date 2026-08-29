@@ -1,4 +1,4 @@
--- ============================================================================
+﻿-- ============================================================================
 -- TEXTILE PRODUCTION WASTE, DEFECT & MACHINE INTELLIGENCE SYSTEM
 -- Script: 02_create_tables.sql
 -- Description: DDL script creating all 26 normalized relational tables (3NF)
@@ -38,7 +38,6 @@ DROP TABLE IF EXISTS locations CASCADE;
 -- 1. MASTER TABLES (LEVEL 0 - ZERO FOREIGN KEY DEPENDENCIES)
 -- ============================================================================
 
--- 1.1 Locations Table
 CREATE TABLE locations (
     location_id SERIAL PRIMARY KEY,
     location_name VARCHAR(100) NOT NULL,
@@ -50,7 +49,6 @@ CREATE TABLE locations (
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
--- 1.2 Machine Types Table
 CREATE TABLE machine_types (
     machine_type_id SERIAL PRIMARY KEY,
     type_code VARCHAR(20) NOT NULL UNIQUE,
@@ -63,7 +61,6 @@ CREATE TABLE machine_types (
     CONSTRAINT chk_mt_process_stage CHECK (process_stage IN ('Spinning', 'Weaving', 'Knitting', 'Dyeing', 'Printing', 'Finishing'))
 );
 
--- 1.3 Shifts Table
 CREATE TABLE shifts (
     shift_id SERIAL PRIMARY KEY,
     shift_code VARCHAR(10) NOT NULL UNIQUE,
@@ -75,7 +72,6 @@ CREATE TABLE shifts (
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
--- 1.4 Defect Types Table
 CREATE TABLE defect_types (
     defect_type_id SERIAL PRIMARY KEY,
     defect_code VARCHAR(20) NOT NULL UNIQUE,
@@ -94,7 +90,6 @@ CREATE TABLE defect_types (
 -- 2. MASTER TABLES (LEVEL 1 - SINGLE FK DEPENDENCIES)
 -- ============================================================================
 
--- 2.1 Plants Table
 CREATE TABLE plants (
     plant_id SERIAL PRIMARY KEY,
     plant_code VARCHAR(20) NOT NULL UNIQUE,
@@ -107,7 +102,6 @@ CREATE TABLE plants (
     CONSTRAINT chk_plant_status CHECK (operational_status IN ('Active', 'Maintenance', 'Decommissioned'))
 );
 
--- 2.2 Products Table
 CREATE TABLE products (
     product_id SERIAL PRIMARY KEY,
     product_code VARCHAR(30) NOT NULL UNIQUE,
@@ -124,7 +118,6 @@ CREATE TABLE products (
     CONSTRAINT chk_prod_price_gt_cost CHECK (selling_price_per_meter >= standard_cost_per_meter)
 );
 
--- 2.3 Materials Table
 CREATE TABLE materials (
     material_id SERIAL PRIMARY KEY,
     material_code VARCHAR(30) NOT NULL UNIQUE,
@@ -139,7 +132,6 @@ CREATE TABLE materials (
     CONSTRAINT chk_mat_uom CHECK (unit_of_measure IN ('kg', 'meters', 'liters', 'grams'))
 );
 
--- 2.4 Suppliers Table
 CREATE TABLE suppliers (
     supplier_id SERIAL PRIMARY KEY,
     supplier_code VARCHAR(30) NOT NULL UNIQUE,
@@ -154,7 +146,6 @@ CREATE TABLE suppliers (
     CONSTRAINT chk_supplier_credit_rating CHECK (credit_rating IN ('AAA', 'AA', 'A', 'BBB', 'BB', 'B', 'CCC'))
 );
 
--- 2.5 Customers Table
 CREATE TABLE customers (
     customer_id SERIAL PRIMARY KEY,
     customer_code VARCHAR(30) NOT NULL UNIQUE,
@@ -171,7 +162,6 @@ CREATE TABLE customers (
 -- 3. MASTER TABLES (LEVEL 2 - MULTI-FK MASTER DEPENDENCIES)
 -- ============================================================================
 
--- 3.1 Production Lines Table
 CREATE TABLE production_lines (
     line_id SERIAL PRIMARY KEY,
     line_code VARCHAR(20) NOT NULL UNIQUE,
@@ -184,7 +174,6 @@ CREATE TABLE production_lines (
     CONSTRAINT chk_line_type CHECK (line_type IN ('Spinning', 'Weaving', 'Knitting', 'Dyeing', 'Printing', 'Finishing'))
 );
 
--- 3.2 Employees Table
 CREATE TABLE employees (
     employee_id SERIAL PRIMARY KEY,
     employee_code VARCHAR(20) NOT NULL UNIQUE,
@@ -205,7 +194,6 @@ CREATE TABLE employees (
 -- 4. MASTER ASSETS & ORDERS (LEVEL 3)
 -- ============================================================================
 
--- 4.1 Machines Table
 CREATE TABLE machines (
     machine_id SERIAL PRIMARY KEY,
     machine_code VARCHAR(30) NOT NULL UNIQUE,
@@ -222,7 +210,6 @@ CREATE TABLE machines (
     CONSTRAINT chk_machine_status CHECK (status IN ('Operational', 'Under Maintenance', 'Offline', 'Decommissioned'))
 );
 
--- 4.2 Customer Orders Table
 CREATE TABLE customer_orders (
     order_id BIGSERIAL PRIMARY KEY,
     order_number VARCHAR(30) NOT NULL UNIQUE,
@@ -240,7 +227,6 @@ CREATE TABLE customer_orders (
     CONSTRAINT chk_cust_order_status CHECK (order_status IN ('Pending', 'In Production', 'Fulfilled', 'Delayed', 'Cancelled'))
 );
 
--- 4.3 Purchase Orders Table
 CREATE TABLE purchase_orders (
     po_id BIGSERIAL PRIMARY KEY,
     po_number VARCHAR(30) NOT NULL UNIQUE,
@@ -261,7 +247,6 @@ CREATE TABLE purchase_orders (
 -- 5. PROCUREMENT ITEMS & PRODUCTION PLANNING (LEVEL 4)
 -- ============================================================================
 
--- 5.1 Purchase Order Items Table
 CREATE TABLE purchase_order_items (
     po_item_id BIGSERIAL PRIMARY KEY,
     po_id BIGINT NOT NULL REFERENCES purchase_orders(po_id) ON DELETE CASCADE,
@@ -273,7 +258,6 @@ CREATE TABLE purchase_order_items (
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
--- 5.2 Production Orders Table
 CREATE TABLE production_orders (
     prod_order_id BIGSERIAL PRIMARY KEY,
     prod_order_number VARCHAR(30) NOT NULL UNIQUE,
@@ -298,7 +282,6 @@ CREATE TABLE production_orders (
 -- 6. INVENTORY BATCHES (LEVEL 5)
 -- ============================================================================
 
--- 6.1 Material Batches Table
 CREATE TABLE material_batches (
     batch_id BIGSERIAL PRIMARY KEY,
     batch_code VARCHAR(50) NOT NULL UNIQUE,
@@ -320,7 +303,6 @@ CREATE TABLE material_batches (
 -- 7. PRODUCTION EXECUTION & MAINTENANCE (LEVEL 6)
 -- ============================================================================
 
--- 7.1 Production Runs Table
 CREATE TABLE production_runs (
     run_id BIGSERIAL PRIMARY KEY,
     run_code VARCHAR(50) NOT NULL UNIQUE,
@@ -343,7 +325,6 @@ CREATE TABLE production_runs (
     CONSTRAINT chk_run_status CHECK (run_status IN ('In Progress', 'Completed', 'Interrupted', 'Terminated'))
 );
 
--- 7.2 Machine Maintenance Table
 CREATE TABLE machine_maintenance (
     maintenance_id BIGSERIAL PRIMARY KEY,
     maintenance_code VARCHAR(50) NOT NULL UNIQUE,
@@ -368,7 +349,6 @@ CREATE TABLE machine_maintenance (
 -- 8. OPERATIONS LOGS, FABRIC ROLLS, DOWNTIME & WASTE (LEVEL 7)
 -- ============================================================================
 
--- 8.1 Material Consumption Table
 CREATE TABLE material_consumption (
     consumption_id BIGSERIAL PRIMARY KEY,
     run_id BIGINT NOT NULL REFERENCES production_runs(run_id) ON DELETE CASCADE,
@@ -380,7 +360,6 @@ CREATE TABLE material_consumption (
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
--- 8.2 Fabric Rolls Table
 CREATE TABLE fabric_rolls (
     roll_id BIGSERIAL PRIMARY KEY,
     roll_barcode VARCHAR(50) NOT NULL UNIQUE,
@@ -396,7 +375,6 @@ CREATE TABLE fabric_rolls (
     CONSTRAINT chk_roll_status CHECK (roll_status IN ('In Stock', 'Dispatched', 'Rework', 'Scrapped', 'Quarantined'))
 );
 
--- 8.3 Machine Downtime Table
 CREATE TABLE machine_downtime (
     downtime_id BIGSERIAL PRIMARY KEY,
     machine_id INTEGER NOT NULL REFERENCES machines(machine_id) ON DELETE RESTRICT,
@@ -415,7 +393,6 @@ CREATE TABLE machine_downtime (
     CONSTRAINT chk_downtime_root_cause CHECK (root_cause_category IN ('Mechanical', 'Electrical', 'Sensor/Pneumatic', 'Raw Material Jam', 'Operational', 'External Utility'))
 );
 
--- 8.4 Production Waste Table
 CREATE TABLE production_waste (
     waste_id BIGSERIAL PRIMARY KEY,
     run_id BIGINT NOT NULL REFERENCES production_runs(run_id) ON DELETE CASCADE,
@@ -437,7 +414,6 @@ CREATE TABLE production_waste (
 -- 9. QUALITY INSPECTION & DEFECTS (LEVEL 8 & 9)
 -- ============================================================================
 
--- 9.1 Quality Inspections Table
 CREATE TABLE quality_inspections (
     inspection_id BIGSERIAL PRIMARY KEY,
     inspection_code VARCHAR(50) NOT NULL UNIQUE,
@@ -455,7 +431,6 @@ CREATE TABLE quality_inspections (
     CONSTRAINT chk_insp_result CHECK (inspection_result IN ('Pass', 'Conditional Pass', 'Fail'))
 );
 
--- 9.2 Defect Records Table
 CREATE TABLE defect_records (
     defect_id BIGSERIAL PRIMARY KEY,
     inspection_id BIGINT NOT NULL REFERENCES quality_inspections(inspection_id) ON DELETE CASCADE,
@@ -474,7 +449,6 @@ CREATE TABLE defect_records (
 -- 10. REWORK RECORDS (LEVEL 10)
 -- ============================================================================
 
--- 10.1 Rework Records Table
 CREATE TABLE rework_records (
     rework_id BIGSERIAL PRIMARY KEY,
     roll_id BIGINT NOT NULL REFERENCES fabric_rolls(roll_id) ON DELETE CASCADE,

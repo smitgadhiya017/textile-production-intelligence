@@ -1,4 +1,4 @@
--- ============================================================================
+﻿-- ============================================================================
 -- TEXTILE PRODUCTION WASTE, DEFECT & MACHINE INTELLIGENCE SYSTEM
 -- Script: 09_advanced_analytics.sql
 -- Description: 30 Advanced SQL Analytical Queries (Queries 41 to 70) utilizing
@@ -11,18 +11,7 @@
 -- ============================================================================
 -- QUERY 41: Month-over-Month (MoM) Fabric Production Growth & Speed Delta
 -- ============================================================================
-/*
-BUSINESS QUESTION:
-What is the Month-over-Month (MoM) volume growth percentage and speed change
-in meters produced across the historical 36-month manufacturing timeline?
 
-BUSINESS PURPOSE:
-Track enterprise production expansion velocity and identify cyclical contractions.
-
-SQL APPROACH:
-Use CTE to aggregate monthly output, then apply LAG() window functions over
-chronological time partitions.
-*/
 WITH MonthlyProduction AS (
     SELECT 
         SUBSTR(run_date, 1, 4) AS prod_year,
@@ -47,20 +36,10 @@ SELECT
 FROM MonthlyProduction
 ORDER BY prod_year, prod_month;
 
-
 -- ============================================================================
 -- QUERY 42: Top-Producing Machine per Plant using ROW_NUMBER()
 -- ============================================================================
-/*
-BUSINESS QUESTION:
-Which single machine achieved the highest production output in each manufacturing plant?
 
-BUSINESS PURPOSE:
-Highlight top asset benchmarks for each plant director.
-
-SQL APPROACH:
-Use CTE with ROW_NUMBER() PARTITION BY plant_id ORDER BY total_meters DESC.
-*/
 WITH PlantMachineTotals AS (
     SELECT 
         p.plant_id,
@@ -92,22 +71,10 @@ FROM PlantMachineTotals
 WHERE plant_machine_rank = 1
 ORDER BY total_meters_produced DESC;
 
-
 -- ============================================================================
 -- QUERY 43: Cumulative Running Total of Material Waste Cost
 -- ============================================================================
-/*
-BUSINESS QUESTION:
-What is the cumulative running total of financial waste loss across all months,
-and what percentage of enterprise scrap had accrued at each date milestone?
 
-BUSINESS PURPOSE:
-Visualize scrap cost accumulation trajectories against annual operating budgets.
-
-SQL APPROACH:
-Aggregate monthly net waste loss, then apply SUM() OVER (ORDER BY year, month
-ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW).
-*/
 WITH MonthlyWaste AS (
     SELECT 
         SUBSTR(recorded_at, 1, 4) AS waste_year,
@@ -131,20 +98,10 @@ SELECT
 FROM MonthlyWaste
 ORDER BY waste_year, waste_month;
 
-
 -- ============================================================================
 -- QUERY 44: 3-Month Moving Average of Material Waste Cost
 -- ============================================================================
-/*
-BUSINESS QUESTION:
-What is the 3-month trailing moving average of net waste financial loss?
 
-BUSINESS PURPOSE:
-Smooth monthly seasonal fluctuations to uncover underlying scrap trend directions.
-
-SQL APPROACH:
-Use AVG() OVER (ORDER BY year, month ROWS BETWEEN 2 PRECEDING AND CURRENT ROW).
-*/
 WITH MonthlyWasteLoss AS (
     SELECT 
         SUBSTR(recorded_at, 1, 4) AS waste_year,
@@ -168,22 +125,10 @@ SELECT
 FROM MonthlyWasteLoss
 ORDER BY waste_year, waste_month;
 
-
 -- ============================================================================
 -- QUERY 45: Monthly Product Defect Rate Ranking with DENSE_RANK()
 -- ============================================================================
-/*
-BUSINESS QUESTION:
-What are the top 3 defect-prone fabric products in each calendar quarter
-ranked by their defect occurrence rate?
 
-BUSINESS PURPOSE:
-Identify recurring quality degradation patterns by product SKU across quarters.
-
-SQL APPROACH:
-Use CTE grouping by quarter and product, applying DENSE_RANK() PARTITION BY quarter
-ORDER BY defect_rate DESC.
-*/
 WITH ProductQuarterlyDefects AS (
     SELECT 
         SUBSTR(pr.run_date, 1, 4) || '-Q' || ((CAST(SUBSTR(pr.run_date, 6, 2) AS INTEGER) - 1) / 3 + 1) AS prod_quarter,
@@ -227,22 +172,10 @@ FROM RankedProducts
 WHERE quarterly_defect_rank <= 3
 ORDER BY prod_quarter DESC, quarterly_defect_rank ASC;
 
-
 -- ============================================================================
 -- QUERY 46: Machines with 3 Consecutive Quarters of Increasing Downtime
 -- ============================================================================
-/*
-BUSINESS QUESTION:
-Which machines experienced a continuous increase in quarterly downtime hours
-over 3 consecutive quarters?
 
-BUSINESS PURPOSE:
-Detect chronic progressive mechanical deterioration before catastrophic failure occurs.
-
-SQL APPROACH:
-Aggregate quarterly downtime, use LAG() and LAG(..., 2) to identify 3 consecutive
-increasing values.
-*/
 WITH MachineQuarterlyDowntime AS (
     SELECT 
         m.machine_id,
@@ -288,22 +221,10 @@ WHERE prev_q1_hours IS NOT NULL
   AND prev_q1_hours > prev_q2_hours
 ORDER BY net_2q_downtime_surge_hours DESC;
 
-
 -- ============================================================================
 -- QUERY 47: Pareto 80/20 Analysis on Material Scrap Costs
 -- ============================================================================
-/*
-BUSINESS QUESTION:
-Which top raw materials account for 80% of total cumulative material waste cost
-(Pareto 80/20 principle)?
 
-BUSINESS PURPOSE:
-Focus procurement and process optimization on the critical 20% high-loss materials.
-
-SQL APPROACH:
-Aggregate scrap cost per material, calculate running cumulative percentage using
-window function SUM() OVER (ORDER BY cost DESC).
-*/
 WITH MaterialWasteSummary AS (
     SELECT 
         m.material_id,
@@ -337,21 +258,10 @@ FROM CumulativeWaste
 ORDER BY material_waste_loss_usd DESC
 LIMIT 20;
 
-
 -- ============================================================================
 -- QUERY 48: Operator Quality Performance vs Shift Peer Group Average
 -- ============================================================================
-/*
-BUSINESS QUESTION:
-How does each operator's defect rate compare to their peer group average on the
-same shift and plant (minimum 20 completed runs)?
 
-BUSINESS PURPOSE:
-Ensure fair operator performance appraisals normalized by shift conditions.
-
-SQL APPROACH:
-Use AVG(op_defect_rate) OVER (PARTITION BY plant_id, shift_id) to benchmark operators.
-*/
 WITH OperatorMetrics AS (
     SELECT 
         e.employee_id,
@@ -390,22 +300,10 @@ FROM OperatorMetrics
 ORDER BY delta_from_shift_peer_avg ASC
 LIMIT 20;
 
-
 -- ============================================================================
 -- QUERY 49: Multi-Dimensional Root-Cause Association Analysis Matrix
 -- ============================================================================
-/*
-BUSINESS QUESTION:
-Which specific combinations of Machine Type, Product Fabric, and Raw Material
-exhibit the highest defect incidence rate above the factory baseline?
 
-BUSINESS PURPOSE:
-Isolate bad interaction combinations between machinery and sensitive fiber yarns.
-
-SQL APPROACH:
-Multi-table CTE joining machine_types, products, materials, consumption, runs,
-rolls, and defects, computing deviation from overall factory defect rate.
-*/
 WITH InteractionMatrix AS (
     SELECT 
         mt.type_name AS machine_type,
@@ -440,23 +338,10 @@ FROM InteractionMatrix
 ORDER BY variance_from_baseline DESC
 LIMIT 15;
 
-
 -- ============================================================================
 -- QUERY 50: Comprehensive Machine Operational Risk Ranking (0-100 Score)
 -- ============================================================================
-/*
-BUSINESS QUESTION:
-What is the composite Machine Operational Risk Score (0-100) for every machine asset,
-and which machines fall into the 'CRITICAL' risk tier?
 
-BUSINESS PURPOSE:
-Rank machinery by multidimensional vulnerability (downtime, failure count, defect rate,
-maintenance cost, and age) for predictive maintenance intervention.
-
-SQL APPROACH:
-Compute normalized 0-100 sub-scores in CTEs, apply weights (30% DT, 25% Freq, 20% Def,
-15% Cost, 10% Age), and classify risk tiers.
-*/
 WITH MachineStats AS (
     SELECT 
         m.machine_id,
@@ -511,21 +396,10 @@ FROM NormalizedScores
 ORDER BY machine_risk_score DESC
 LIMIT 20;
 
-
 -- ============================================================================
 -- QUERY 51: Lead Time Variance between Expected and Actual PO Delivery
 -- ============================================================================
-/*
-BUSINESS QUESTION:
-What is the average lead time variance (actual delivery vs expected delivery)
-for each raw material supplier?
 
-BUSINESS PURPOSE:
-Evaluate supplier fulfillment reliability and prevent supply-chain stockouts.
-
-SQL APPROACH:
-Compute date differences in days using JulianDay, grouping by supplier with window averages.
-*/
 SELECT 
     s.supplier_id,
     s.supplier_code,
@@ -543,22 +417,10 @@ GROUP BY s.supplier_id, s.supplier_code, s.supplier_name, s.credit_rating
 HAVING COUNT(po.po_id) >= 8
 ORDER BY avg_delivery_delay_days DESC;
 
-
 -- ============================================================================
 -- QUERY 52: Defect Severity Ratio by Machine Manufacturer
 -- ============================================================================
-/*
-BUSINESS QUESTION:
-What is the proportion of Critical, Major, and Minor defects produced across
-different machine manufacturers (Picanol, Toyota, Tsudakoma, Rieter, etc.)?
 
-BUSINESS PURPOSE:
-Evaluate OEM machine build quality and precision stability.
-
-SQL APPROACH:
-Join machines, production_runs, fabric_rolls, and defect_records, using conditional
-aggregations to compute manufacturer defect profiles.
-*/
 SELECT 
     m.manufacturer,
     COUNT(DISTINCT m.machine_id) AS machines_installed,
@@ -575,22 +437,10 @@ LEFT JOIN defect_records dr ON fr.roll_id = dr.roll_id
 GROUP BY m.manufacturer
 ORDER BY critical_defect_pct DESC;
 
-
 -- ============================================================================
 -- QUERY 53: Production Runs Exceeding Planned Speed Standards (Over-Speeding Analysis)
 -- ============================================================================
-/*
-BUSINESS QUESTION:
-Which production runs operated at an actual RPM speed exceeding planned speed,
-and did over-speeding correlate with increased defect occurrence?
 
-BUSINESS PURPOSE:
-Analyze whether running machines beyond nominal speed degrades fabric quality.
-
-SQL APPROACH:
-Filter production_runs where actual_speed_rpm > planned_speed_rpm, joining
-defect_records and computing defect density per 1,000 meters.
-*/
 SELECT 
     pr.run_id,
     pr.run_code,
@@ -613,22 +463,10 @@ HAVING COUNT(dr.defect_id) >= 2
 ORDER BY speed_excess_rpm DESC, defects_per_1000m DESC
 LIMIT 20;
 
-
 -- ============================================================================
 -- QUERY 54: Supplier Quality Index (SQI) and Performance Tier Classification
 -- ============================================================================
-/*
-BUSINESS QUESTION:
-What is the composite Supplier Quality Index (SQI) for every active vendor,
-and what are their assigned procurement tiers?
 
-BUSINESS PURPOSE:
-Automate supplier tiering (Excellent, Good, Average, Poor, Critical) for procurement audits.
-
-SQL APPROACH:
-Multi-table CTE combining batch rejection rates, downstream defect association,
-and waste excess into a normalized SQI score (0-100 scale).
-*/
 WITH SupplierMetrics AS (
     SELECT 
         s.supplier_id,
@@ -683,20 +521,10 @@ FROM ScoredSuppliers
 ORDER BY sqi_score ASC
 LIMIT 20;
 
-
 -- ============================================================================
 -- QUERY 55: Financial Downtime Loss per Machine Operating Hour
 -- ============================================================================
-/*
-BUSINESS QUESTION:
-Which machines generate the highest hourly downtime loss relative to their active run time?
 
-BUSINESS PURPOSE:
-Detect assets that impose extreme overhead drag per hour of production.
-
-SQL APPROACH:
-Compute active run hours vs downtime financial loss per machine.
-*/
 SELECT 
     m.machine_id,
     m.machine_code,
@@ -718,21 +546,10 @@ HAVING SUM(8.0) >= 100.0
 ORDER BY downtime_loss_per_operating_hour DESC
 LIMIT 15;
 
-
 -- ============================================================================
 -- QUERY 56: Rework Frequency and Scrap Conversion Rate by Shift
 -- ============================================================================
-/*
-BUSINESS QUESTION:
-What percentage of rolls produced on each shift require secondary rework,
-and what percentage of reworked rolls ultimately end up scrapped?
 
-BUSINESS PURPOSE:
-Evaluate the quality recovery effectiveness of each shift's operations.
-
-SQL APPROACH:
-Join shifts, production_runs, fabric_rolls, and rework_records with conditional aggregations.
-*/
 SELECT 
     s.shift_code,
     s.shift_name,
@@ -748,20 +565,10 @@ LEFT JOIN rework_records rw ON fr.roll_id = rw.roll_id
 GROUP BY s.shift_code, s.shift_name, s.shift_id
 ORDER BY s.shift_id;
 
-
 -- ============================================================================
 -- QUERY 57: Top 5 Highest Financial Loss Production Runs per Plant
 -- ============================================================================
-/*
-BUSINESS QUESTION:
-What are the top 5 costliest production runs (combined waste + defect loss) for each plant?
 
-BUSINESS PURPOSE:
-Provide plant managers with an exact list of major loss events for retrospective auditing.
-
-SQL APPROACH:
-Compute run losses in a CTE, apply ROW_NUMBER() PARTITION BY plant_id ORDER BY total_loss DESC.
-*/
 WITH RunLosses AS (
     SELECT 
         p.plant_id,
@@ -799,22 +606,10 @@ FROM RunLosses
 WHERE rank_in_plant <= 5
 ORDER BY plant_id, rank_in_plant;
 
-
 -- ============================================================================
 -- QUERY 58: Machine Maintenance Cost vs Machine Age Correlation
 -- ============================================================================
-/*
-BUSINESS QUESTION:
-How does average maintenance cost per machine scale across machine age cohorts
-(e.g., 0-3 Years, 4-6 Years, 7-10 Years, > 10 Years)?
 
-BUSINESS PURPOSE:
-Determine optimal asset replacement and capital expenditure (CapEx) schedules.
-
-SQL APPROACH:
-Use CASE statements to cohort machine age, aggregating maintenance jobs, labor,
-and spare parts spend.
-*/
 SELECT 
     CASE 
         WHEN (JULIANDAY('2025-12-31') - JULIANDAY(m.installation_date)) / 365.25 < 4.0 THEN '1. New (0-3 Years)'
@@ -839,21 +634,10 @@ GROUP BY
     END
 ORDER BY machine_age_cohort;
 
-
 -- ============================================================================
 -- QUERY 59: Customer Order Fulfillment Velocity & Lead Time Benchmark
 -- ============================================================================
-/*
-BUSINESS QUESTION:
-What is the average order fulfillment duration (order placement to actual dispatch)
-by customer market segment?
 
-BUSINESS PURPOSE:
-Ensure fast-fashion customers receive rapid fulfillment compared to bulk industrial orders.
-
-SQL APPROACH:
-Join customers and customer_orders, computing JulianDay difference and grouping by segment.
-*/
 SELECT 
     c.segment,
     COUNT(co.order_id) AS total_orders_fulfilled,
@@ -867,21 +651,10 @@ WHERE co.order_status = 'Fulfilled' AND co.actual_dispatch_date IS NOT NULL
 GROUP BY c.segment
 ORDER BY avg_fulfillment_cycle_days ASC;
 
-
 -- ============================================================================
 -- QUERY 60: Total Production Loss KPI Master Rollup
 -- ============================================================================
-/*
-BUSINESS QUESTION:
-What is the consolidated financial Total Production Loss (TPL) breakdown by plant
-combining Material Waste, Downtime Overhead, Reactive Maintenance, and Rework?
 
-BUSINESS PURPOSE:
-Deliver the executive master financial loss KPI table for board-level reporting.
-
-SQL APPROACH:
-Multi-CTE query aggregating plant-specific cost streams into a unified financial matrix.
-*/
 WITH PlantWaste AS (
     SELECT pl.plant_id, ROUND(SUM(pw.net_financial_loss), 2) AS waste_loss
     FROM production_lines pl
@@ -929,20 +702,10 @@ LEFT JOIN PlantMaintenance pm ON p.plant_id = pm.plant_id
 LEFT JOIN PlantRework prw ON p.plant_id = prw.plant_id
 ORDER BY total_production_loss_usd DESC;
 
-
 -- ============================================================================
 -- QUERY 61: First-Pass Yield (FPY) Trend by Quarter
 -- ============================================================================
-/*
-BUSINESS QUESTION:
-What is the quarterly trend of First-Pass Yield (FPY) across the 3-year timeline?
 
-BUSINESS PURPOSE:
-Track enterprise manufacturing quality maturity and defect suppression over time.
-
-SQL APPROACH:
-Aggregate quarterly rolls, calculating FPY percentage using conditional aggregation.
-*/
 SELECT 
     SUBSTR(pr.run_date, 1, 4) || '-Q' || ((CAST(SUBSTR(pr.run_date, 6, 2) AS INTEGER) - 1) / 3 + 1) AS production_quarter,
     COUNT(DISTINCT fr.roll_id) AS total_rolls_produced,
@@ -954,20 +717,10 @@ LEFT JOIN rework_records rw ON fr.roll_id = rw.roll_id
 GROUP BY SUBSTR(pr.run_date, 1, 4) || '-Q' || ((CAST(SUBSTR(pr.run_date, 6, 2) AS INTEGER) - 1) / 3 + 1)
 ORDER BY production_quarter;
 
-
 -- ============================================================================
 -- QUERY 62: Top 5 Machines repeatedly associated with the Same Defect Type
 -- ============================================================================
-/*
-BUSINESS QUESTION:
-Which machines exhibit chronic repeated occurrences of the exact same defect code?
 
-BUSINESS PURPOSE:
-Isolate mechanical wear (e.g. repeated weft tears or needle streaks) tied to a specific unit.
-
-SQL APPROACH:
-Join machines, runs, rolls, defects, group by machine and defect type with HAVING filter.
-*/
 SELECT 
     m.machine_code,
     m.machine_name,
@@ -989,21 +742,10 @@ HAVING COUNT(dr.defect_id) >= 12
 ORDER BY recurring_defect_count DESC
 LIMIT 15;
 
-
 -- ============================================================================
 -- QUERY 63: Material Consumption Efficiency: Planned vs Actual Consumption Rate
 -- ============================================================================
-/*
-BUSINESS QUESTION:
-What is the average material consumption rate (kg of material consumed per meter of fabric)
-across different fabric product types?
 
-BUSINESS PURPOSE:
-Verify Bill-of-Materials (BOM) standard accuracy and identify material over-consumption.
-
-SQL APPROACH:
-Join products, runs, and consumption, computing ratio of kg consumed to actual meters produced.
-*/
 SELECT 
     prod.product_code,
     prod.product_name,
@@ -1022,21 +764,10 @@ HAVING SUM(pr.actual_meters) >= 5000.0
 ORDER BY bom_variance_kg_per_meter DESC
 LIMIT 15;
 
-
 -- ============================================================================
 -- QUERY 64: Machine Downtime Impact on Production Schedule Delays
 -- ============================================================================
-/*
-BUSINESS QUESTION:
-Which production orders suffered actual completion delays exceeding 3 days
-due to unplanned machine downtime occurrences during their runs?
 
-BUSINESS PURPOSE:
-Correlate machine asset breakdowns directly with customer fulfillment delays.
-
-SQL APPROACH:
-Join production_orders, runs, and downtime, filtering by actual delay vs target date.
-*/
 SELECT 
     po.prod_order_number,
     p.plant_name,
@@ -1059,21 +790,10 @@ HAVING (JULIANDAY(po.actual_end_date) - JULIANDAY(po.target_end_date)) >= 3
 ORDER BY days_delayed DESC, total_downtime_hours_lost DESC
 LIMIT 15;
 
-
 -- ============================================================================
 -- QUERY 65: Maintenance Technician Efficiency & Resolution Speed (MTTR)
 -- ============================================================================
-/*
-BUSINESS QUESTION:
-What is the average repair resolution time (MTTR) and total labor cost across
-individual maintenance technicians (minimum 15 completed jobs)?
 
-BUSINESS PURPOSE:
-Evaluate maintenance workforce productivity and repair proficiency.
-
-SQL APPROACH:
-Join employees and machine_maintenance, aggregating job counts and average repair hours.
-*/
 SELECT 
     e.employee_id,
     e.employee_code,
@@ -1092,21 +812,10 @@ GROUP BY e.employee_id, e.employee_code, e.first_name, e.last_name, p.plant_name
 HAVING COUNT(mm.maintenance_id) >= 15
 ORDER BY avg_hours_per_job_mttr ASC;
 
-
 -- ============================================================================
 -- QUERY 66: Monthly Defect Rate Trend by Fabric Type (Pivot with CASE)
 -- ============================================================================
-/*
-BUSINESS QUESTION:
-What is the quarterly defect rate per 1,000 meters for Cotton, Denim, Polyester,
-and Blends pivoted side-by-side?
 
-BUSINESS PURPOSE:
-Provide executive leadership with a clean comparative matrix across major fabric families.
-
-SQL APPROACH:
-Use conditional aggregation inside quarterly groupings to pivot fabric families.
-*/
 SELECT 
     SUBSTR(pr.run_date, 1, 4) || '-Q' || ((CAST(SUBSTR(pr.run_date, 6, 2) AS INTEGER) - 1) / 3 + 1) AS production_quarter,
     ROUND(SUM(CASE WHEN prod.fabric_type = 'Cotton' THEN 1 ELSE 0 END) * 1000.0 / NULLIF(SUM(CASE WHEN prod.fabric_type = 'Cotton' THEN pr.actual_meters ELSE 0 END), 0), 2) AS cotton_defects_per_1000m,
@@ -1120,21 +829,10 @@ LEFT JOIN defect_records dr ON fr.roll_id = dr.roll_id
 GROUP BY SUBSTR(pr.run_date, 1, 4) || '-Q' || ((CAST(SUBSTR(pr.run_date, 6, 2) AS INTEGER) - 1) / 3 + 1)
 ORDER BY production_quarter;
 
-
 -- ============================================================================
 -- QUERY 67: Supplier Batch Rejection Root Cause Taxonomy
 -- ============================================================================
-/*
-BUSINESS QUESTION:
-What are the primary rejection reasons cited for rejected raw material batches,
-and which suppliers are responsible for each failure type?
 
-BUSINESS PURPOSE:
-Provide detailed factual evidence during vendor commercial audits and penalty claims.
-
-SQL APPROACH:
-Filter material_batches for 'Rejected', grouping by rejection reason and supplier.
-*/
 SELECT 
     mb.batch_rejection_reason,
     s.supplier_name,
@@ -1149,20 +847,10 @@ WHERE mb.quality_status = 'Rejected'
 GROUP BY mb.batch_rejection_reason, s.supplier_name, m.material_name, mb.unit_of_measure
 ORDER BY rejected_batches_count DESC;
 
-
 -- ============================================================================
 -- QUERY 68: Machine Stoppage Severity & Longest Unplanned Breakdown Events
 -- ============================================================================
-/*
-BUSINESS QUESTION:
-What are the top 15 single longest unplanned breakdown events recorded across the enterprise?
 
-BUSINESS PURPOSE:
-Audit catastrophic failure incidents for Root Cause Corrective Action (RCCA).
-
-SQL APPROACH:
-Filter machine_downtime for 'Unplanned Breakdown' and sort by duration_hours descending.
-*/
 SELECT 
     md.downtime_id,
     p.plant_name,
@@ -1182,21 +870,10 @@ WHERE md.downtime_category = 'Unplanned Breakdown'
 ORDER BY md.duration_hours DESC
 LIMIT 15;
 
-
 -- ============================================================================
 -- QUERY 69: Plant Production Capacity Utilization vs Nominal Nameplate Limit
 -- ============================================================================
-/*
-BUSINESS QUESTION:
-What percentage of nominal nameplate daily capacity is actually utilized by each
-manufacturing plant on average?
 
-BUSINESS PURPOSE:
-Support strategic CapEx expansion and line balancing across enterprise facilities.
-
-SQL APPROACH:
-Compare daily average actual output against total_capacity_meters_per_day in plants table.
-*/
 SELECT 
     p.plant_id,
     p.plant_code,
@@ -1211,23 +888,10 @@ JOIN production_runs pr ON pl.line_id = pr.line_id
 GROUP BY p.plant_id, p.plant_code, p.plant_name, p.total_capacity_meters_per_day
 ORDER BY nameplate_capacity_utilization_pct DESC;
 
-
 -- ============================================================================
 -- QUERY 70: Executive Operational Health Matrix & Alert Trigger Scorecard
 -- ============================================================================
-/*
-BUSINESS QUESTION:
-Which plants currently trigger executive alerts based on threshold violations across:
-1. High Scrap Loss (> $300,000)
-2. Low First-Pass Yield (< 88.0%)
-3. Chronic Machine Downtime (> 1,200 hours)?
 
-BUSINESS PURPOSE:
-Deliver automated management exception reporting across operational facilities.
-
-SQL APPROACH:
-Combine plant-level performance metrics into an executive alert rule matrix.
-*/
 WITH PlantScrap AS (
     SELECT pl.plant_id, ROUND(COALESCE(SUM(pw.net_financial_loss), 0.0), 2) AS total_scrap_loss_usd
     FROM production_lines pl

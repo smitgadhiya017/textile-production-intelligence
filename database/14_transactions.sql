@@ -1,4 +1,4 @@
--- ============================================================================
+﻿-- ============================================================================
 -- TEXTILE PRODUCTION WASTE, DEFECT & MACHINE INTELLIGENCE SYSTEM
 -- Script: 14_transactions.sql
 -- Description: ACID-compliant Transaction Scripts demonstrating atomic multi-table
@@ -9,13 +9,6 @@
 -- ============================================================================
 -- SCENARIO 01: Multi-Table Production Run Completion Transaction (COMMIT)
 -- ============================================================================
-/*
-BUSINESS PURPOSE:
-Atomically completes an end-of-shift manufacturing run: records actual output,
-logs raw material consumption, generates serialized fabric rolls, logs quality
-inspections, records process scrap, and updates work order progress in a single
-all-or-nothing transactional boundary.
-*/
 
 DO $$
 DECLARE
@@ -129,16 +122,9 @@ BEGIN
 END;
 $$;
 
-
 -- ============================================================================
 -- SCENARIO 02: Transaction Failure & Full Rollback Simulation (ROLLBACK)
 -- ============================================================================
-/*
-BUSINESS PURPOSE:
-Simulates a critical mid-process failure (e.g. invalid negative scrap quantity
-violating CHECK constraints). Demonstrates full transaction rollback ensuring
-zero partial or orphaned records pollute the database.
-*/
 
 DO $$
 DECLARE
@@ -180,16 +166,9 @@ EXCEPTION WHEN OTHERS THEN
 END;
 $$;
 
-
 -- ============================================================================
 -- SCENARIO 03: Partial Rollback with SAVEPOINTS
 -- ============================================================================
-/*
-BUSINESS PURPOSE:
-Executes batch processing where primary operations succeed, an optional non-critical
-secondary operation fails, and the transaction safely rolls back to a SAVEPOINT
-preserving the primary valid business state before committing.
-*/
 
 -- Standard SQL Savepoint Workflow Example:
 BEGIN;
@@ -211,16 +190,9 @@ SAVEPOINT sv_maintenance_completed;
 -- 4. Commit Primary Valid Work
 COMMIT;
 
-
 -- ============================================================================
 -- SCENARIO 04: Maintenance Stoppage with Asset State Lock (COMMIT)
 -- ============================================================================
-/*
-BUSINESS PURPOSE:
-Locks machine asset state during emergency breakdown, schedules immediate
-repair ticket, records downtime stoppage, and ensures machine status is
-synchronized across all operational queries.
-*/
 
 DO $$
 DECLARE

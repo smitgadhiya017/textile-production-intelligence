@@ -157,47 +157,36 @@ CREATE INDEX IF NOT EXISTS idx_waste_material_id
 -- 2. COMPOSITE ANALYTICAL & TIME-SERIES INDEXES
 -- ============================================================================
 
--- Accelerates monthly machine production and efficiency rankings
 CREATE INDEX IF NOT EXISTS idx_prod_runs_machine_date 
     ON production_runs(machine_id, run_date);
 
--- Accelerates product volume and scrap trend analytics by date
 CREATE INDEX IF NOT EXISTS idx_prod_runs_product_date 
     ON production_runs(product_id, run_date);
 
--- Accelerates shift and operator efficiency scorecards
 CREATE INDEX IF NOT EXISTS idx_prod_runs_operator_shift_date 
     ON production_runs(operator_id, shift_id, run_date);
 
--- Accelerates batch-to-run material trace analytics
 CREATE INDEX IF NOT EXISTS idx_consumption_batch_date 
     ON material_consumption(batch_id, consumed_at);
 
--- Accelerates quality inspection time-series and scoring distribution
 CREATE INDEX IF NOT EXISTS idx_inspections_date_score 
     ON quality_inspections(inspection_date, quality_score);
 
--- Accelerates defect frequency, Pareto analysis, and type trends
 CREATE INDEX IF NOT EXISTS idx_defects_type_detected 
     ON defect_records(defect_type_id, detected_at);
 
--- Accelerates machine downtime frequency, MTBF and MTTR calculations
 CREATE INDEX IF NOT EXISTS idx_downtime_machine_time 
     ON machine_downtime(machine_id, start_time, duration_hours);
 
--- Accelerates machine maintenance schedules and cost rollups
 CREATE INDEX IF NOT EXISTS idx_maintenance_machine_sched 
     ON machine_maintenance(machine_id, scheduled_date, maintenance_status);
 
--- Accelerates waste cost analysis by material and date
 CREATE INDEX IF NOT EXISTS idx_waste_material_recorded 
     ON production_waste(material_id, recorded_at, net_financial_loss);
 
--- Accelerates supplier purchase volume and receipt tracking
 CREATE INDEX IF NOT EXISTS idx_purchase_orders_supplier_date 
     ON purchase_orders(supplier_id, order_date, status);
 
--- Accelerates supplier batch acceptance and rejection auditing
 CREATE INDEX IF NOT EXISTS idx_batches_supplier_status 
     ON material_batches(supplier_id, quality_status, received_date);
 
@@ -205,32 +194,26 @@ CREATE INDEX IF NOT EXISTS idx_batches_supplier_status
 -- 3. PARTIAL INDEXES (OPERATIONAL ALERTS & ABNORMAL EVENT FILTERING)
 -- ============================================================================
 
--- Partial index for active and interrupted production runs
 CREATE INDEX IF NOT EXISTS idx_part_runs_active 
     ON production_runs(run_id, machine_id, run_status) 
     WHERE run_status IN ('In Progress', 'Interrupted');
 
--- Partial index for failed quality inspections (Critical Quality Alerts)
 CREATE INDEX IF NOT EXISTS idx_part_inspections_failed 
     ON quality_inspections(roll_id, quality_score, inspection_date) 
     WHERE inspection_result = 'Fail';
 
--- Partial index for critical defect instances requiring immediate containment
 CREATE INDEX IF NOT EXISTS idx_part_defects_critical 
     ON defect_records(defect_type_id, detected_at) 
     WHERE severity = 'Critical';
 
--- Partial index for unplanned machine breakdowns (MTBF computation filter)
 CREATE INDEX IF NOT EXISTS idx_part_downtime_unplanned 
     ON machine_downtime(machine_id, start_time, duration_hours) 
     WHERE downtime_category = 'Unplanned Breakdown';
 
--- Partial index for rejected incoming raw material lots (Supplier QA Alerts)
 CREATE INDEX IF NOT EXISTS idx_part_batches_rejected 
     ON material_batches(supplier_id, material_id, received_date) 
     WHERE quality_status = 'Rejected';
 
--- Partial index for open / delayed customer orders
 CREATE INDEX IF NOT EXISTS idx_part_cust_orders_delayed 
     ON customer_orders(order_id, customer_id, promised_delivery_date) 
     WHERE order_status IN ('Pending', 'In Production', 'Delayed');
