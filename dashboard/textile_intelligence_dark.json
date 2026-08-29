@@ -1,0 +1,43 @@
+{
+  "name": "Textile Intelligence Dark",
+  "dataColors": [
+    "#00D4FF",
+    "#F97316",
+    "#A855F7",
+    "#22C55E",
+    "#EAB308",
+    "#DC2626",
+    "#EC4899",
+    "#06B6D4"
+  ],
+  "background": "#0F1B2D",
+  "foreground": "#1E3A5F",
+  "tableAccent": "#00D4FF",
+  "good": "#22C55E",
+  "neutral": "#EAB308",
+  "bad": "#DC2626",
+  "maximum": "#22C55E",
+  "center": "#EAB308",
+  "minimum": "#DC2626",
+  "null": "#6B7280",
+  "visualStyles": {
+    "*": {
+      "*": {
+        "background": [{ "color": { "solid": { "color": "#0F1B2D" } } }],
+        "foreground": [{ "color": { "solid": { "color": "#E2E8F0" } } }]
+      }
+    },
+    "card": {
+      "*": {
+        "background": [{ "color": { "solid": { "color": "#1E3A5F" } } }],
+        "border": [{ "color": { "solid": { "color": "#00D4FF" } } }]
+      }
+    },
+    "tableEx": {
+      "*": {
+        "grid": [{ "gridVertical": false, "rowPadding": 6 }],
+        "header": [{ "fontColor": { "solid": { "color": "#00D4FF" } } }]
+      }
+    }
+  }
+}
